@@ -1,19 +1,15 @@
 #include "MyMesh.h"
 
+MyMesh::MeshMap MyMesh::meshes = {};
 
-MyMesh::MyMesh(const char* meshName)
+MyMesh::MyMesh()
 {
-	auto contains = meshes.find(meshName);
-	if (contains == meshes.end())
-		throw std::exception("Mesh name is already set exception");
-	meshes[meshName] = this;
 }
 
-ObjMesh::ObjMesh(const char* meshName, const char* fileName)
-: MyMesh(meshName)
+ObjMesh::ObjMesh(const char* fileName)
+: MyMesh()
 {
 	this->fileName = fileName;
-	mesh = nullptr;
 }
 
 void ObjMesh::init()
@@ -27,8 +23,12 @@ void ObjMesh::draw()
 	mesh->draw();
 }
 
-VaoMesh::VaoMesh(const char* meshName, int vertNCount, int vertMCount)
-: MyMesh(meshName)
+void ObjMesh::bind()
+{
+}
+
+VaoMesh::VaoMesh(int vertNCount, int vertMCount)
+: MyMesh()
 {
 	indicesCount = -1;
 	N = vertNCount;
@@ -37,29 +37,9 @@ VaoMesh::VaoMesh(const char* meshName, int vertNCount, int vertMCount)
 
 void VaoMesh::init()
 {
-	std::vector<Vertex> vertices;
+	std::vector<Vertex> vertices = getVertices();
 
-	for (int x = 0; x <= N; x++) {
-		for (int y = 0; y <= M; y++) {
-			float u = x / (float)N;
-			float v = y / (float)M;
-
-			vertices.push_back({ CalcPoint(u, v), CalcNorm(u, v) , CalcText(u, v) });
-		}
-	}
-
-	std::vector<int> indices;
-	int index = 0;
-	for (int i = 0; i < N; i++) {
-		for (int j = 0; j < M; j++) {
-			indices[6 * i + j * 3 * 2 * N + 5] = (i)+(j) * (N + 1);
-			indices[6 * i + j * 3 * 2 * N + 4] = (i + 1) + (j) * (N + 1);
-			indices[6 * i + j * 3 * 2 * N + 3] = (i)+(j + 1) * (N + 1);
-			indices[6 * i + j * 3 * 2 * N + 2] = (i + 1) + (j) * (N + 1);
-			indices[6 * i + j * 3 * 2 * N + 1] = (i + 1) + (j + 1) * (N + 1);
-			indices[6 * i + j * 3 * 2 * N + 0] = (i)+(j + 1) * (N + 1);
-		}
-	}
+	std::vector<int> indices = getIndices();
 	indicesCount = indices.size();
 
 	m_VertexBuffer.BufferData(vertices);
@@ -93,6 +73,36 @@ glm::vec3 VaoMesh::CalcNorm(float u, float v)
 	return glm::normalize(glm::cross(du, dv));
 }
 
+std::vector<Vertex> VaoMesh::getVertices()
+{
+	std::vector<Vertex> vertices;
+	for (int x = 0; x <= N; x++) {
+		for (int y = 0; y <= M; y++) {
+			float u = x / ((float)N);
+			float v = y / ((float)M);
+
+			vertices.push_back({ CalcPoint(u, v), CalcNorm(u, v) , CalcText(u, v) });
+		}
+	}
+	return vertices;
+}
+
+std::vector<int> VaoMesh::getIndices()
+{
+	std::vector<int> indices(N * M * 6);
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < M; j++) {
+			indices[6 * i + j * 3 * 2 * N + 5] = (i)+(j) * (N + 1);
+			indices[6 * i + j * 3 * 2 * N + 4] = (i + 1) + (j) * (N + 1);
+			indices[6 * i + j * 3 * 2 * N + 3] = (i)+(j + 1) * (N + 1);
+			indices[6 * i + j * 3 * 2 * N + 2] = (i + 1) + (j) * (N + 1);
+			indices[6 * i + j * 3 * 2 * N + 1] = (i + 1) + (j + 1) * (N + 1);
+			indices[6 * i + j * 3 * 2 * N + 0] = (i)+(j + 1) * (N + 1);
+		}
+	}
+	return indices;
+}
+
 glm::vec3 VaoMesh::CalcPoint(float u, float v)
 {
 	return glm::vec3(u, 0, v);
@@ -100,7 +110,11 @@ glm::vec3 VaoMesh::CalcPoint(float u, float v)
 
 void VaoMesh::draw()
 {
-	m_Vao.Bind();
 	glDrawElements(GL_TRIANGLES, indicesCount, GL_UNSIGNED_INT, nullptr);
+}
+
+void VaoMesh::bind()
+{
+	m_Vao.Bind();
 }
 

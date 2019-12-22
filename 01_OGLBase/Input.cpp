@@ -3,6 +3,46 @@
 #include <sstream>
 #include <iostream>
 
+Input::KeyValueMap Input::values = {};
+Input::KeyCodeKeyMap Input::keys = {
+	{SDLK_w,     InputKey::FORWARD   },
+	{SDLK_s,     InputKey::BACKWARD  },
+	{SDLK_a,     InputKey::LEFT      },
+	{SDLK_d,     InputKey::RIGHT     },
+	{SDLK_r,     InputKey::AIM_UP    },
+	{SDLK_f,     InputKey::AIM_DOWN  },
+	{SDLK_q,     InputKey::AIM_LEFT  },
+	{SDLK_e,     InputKey::AIM_RIGHT },
+	{SDLK_LCTRL, InputKey::SHOOT     }
+};
+
+const char* Input::getEnumName(Input::InputKey key)
+{
+	switch (key)
+	{
+	case Input::InputKey::FORWARD:
+		return "FORWARD";
+	case Input::InputKey::BACKWARD:
+		return "BACKWARD";
+	case Input::InputKey::LEFT:
+		return "LEFT";
+	case Input::InputKey::RIGHT:
+		return "RIGHT";
+	case Input::InputKey::AIM_UP:
+		return "AIM_UP";
+	case Input::InputKey::AIM_DOWN:
+		return "AIM_DOWN";
+	case Input::InputKey::AIM_LEFT:
+		return "AIM_LEFT";
+	case Input::InputKey::AIM_RIGHT:
+		return "AIM_RIGHT";
+	case Input::InputKey::SHOOT:
+		return "SHOOT";
+	default:
+		return "NONE";
+	}
+}
+
 bool Input::isPressed(Input::InputKey key)
 {
 	return Input::values[key] == 1;
@@ -18,18 +58,6 @@ bool Input::isReleased(Input::InputKey key)
 	return Input::values[key] == -1;
 }
 
-void Input::init()
-{
-	Input::keys[SDLK_w] = InputKey::FORWARD;
-	Input::keys[SDLK_s] = InputKey::BACKWARD;
-	Input::keys[SDLK_a] = InputKey::LEFT;
-	Input::keys[SDLK_d] = InputKey::RIGHT;
-	Input::keys[SDLK_r] = InputKey::AIM_UP;
-	Input::keys[SDLK_f] = InputKey::AIM_DOWN;
-	Input::keys[SDLK_q] = InputKey::AIM_LEFT;
-	Input::keys[SDLK_e] = InputKey::AIM_RIGHT;
-	Input::keys[SDLK_SPACE] = InputKey::SHOOT;
-}
 
 void Input::KeyboardDown(SDL_KeyboardEvent& e)
 {
@@ -37,8 +65,11 @@ void Input::KeyboardDown(SDL_KeyboardEvent& e)
 	if (it != (Input::keys).end())
 	{
 		InputKey k = it->second;
-		if (values[k] == 0)
+		if (values[k] == 0) {
 			values[k] = 1;
+			if (Input::DEBUG_KEYS)
+			std::cout << Input::getEnumName(it->second) << " pressed" << std::endl;
+		}
 	}
 }
 
@@ -49,9 +80,11 @@ void Input::KeyboardUp(SDL_KeyboardEvent& e)
 		return;
 	
 	InputKey k = Input::keys[e.keysym.sym];
-	//std::cout << it->first << " released" << std::endl;
-	if (values[k] == 2)
+	if (values[k] == 2) {
 		values[k] = -1;
+		if (Input::DEBUG_KEYS)
+		std::cout << Input::getEnumName(it->second) << " released" << std::endl;
+	}
 }
 
 void Input::Update()

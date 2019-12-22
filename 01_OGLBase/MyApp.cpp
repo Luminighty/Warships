@@ -9,10 +9,22 @@
 #include <imgui/imgui.h>
 #include "includes/GLUtils.hpp"
 
+#include "SphereMesh.h"
+#include "PlaneMesh.h"
+#include "PlayerShip.h"
+#include "EnemyShip.h"
+#include "Water.h"
+#include "HillMesh.h"
+#include "CannonBottomMesh.h"
+#include "CannonTopMesh.h"
+
+std::vector<GameObject*> CMyApp::gameObjects = {};
+std::vector<GameObject*> CMyApp::toDestroy = {};
+std::vector<GameObject*> CMyApp::toAdd = {};
+
 CMyApp::CMyApp(void)
 {
-	m_camera.SetView(glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	m_mesh = nullptr;
+	camera.SetView(glm::vec3(5, 5, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 }
 
 CMyApp::~CMyApp(void)
@@ -20,86 +32,19 @@ CMyApp::~CMyApp(void)
 	std::cout << "dtor!\n";
 }
 
-void CMyApp::InitCube()
+void CMyApp::InitMeshes()
 {
-	//struct Vertex{ glm::vec3 position; glm::vec3 normals; glm::vec2 texture; };
-	std::vector<Vertex>vertices;
-	
-	//front									 
-	vertices.push_back({ glm::vec3(-0.5, -0.5, +0.5), glm::vec3(0, 0, 1), glm::vec2(0, 0) });
-	vertices.push_back({ glm::vec3(+0.5, -0.5, +0.5), glm::vec3(0, 0, 1), glm::vec2(1, 0) });
-	vertices.push_back({ glm::vec3(-0.5, +0.5, +0.5), glm::vec3(0, 0, 1), glm::vec2(0, 1) });
-	vertices.push_back({ glm::vec3(+0.5, +0.5, +0.5), glm::vec3(0, 0, 1), glm::vec2(1, 1) });
-	//back
-	vertices.push_back({ glm::vec3(+0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(0, 0) });
-	vertices.push_back({ glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(1, 0) });
-	vertices.push_back({ glm::vec3(+0.5, +0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(0, 1) });
-	vertices.push_back({ glm::vec3(-0.5, +0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(1, 1) });
-	//right									 
-	vertices.push_back({ glm::vec3(+0.5, -0.5, +0.5), glm::vec3(1, 0, 0), glm::vec2(0, 0) });
-	vertices.push_back({ glm::vec3(+0.5, -0.5, -0.5), glm::vec3(1, 0, 0), glm::vec2(1, 0) });
-	vertices.push_back({ glm::vec3(+0.5, +0.5, +0.5), glm::vec3(1, 0, 0), glm::vec2(0, 1) });
-	vertices.push_back({ glm::vec3(+0.5, +0.5, -0.5), glm::vec3(1, 0, 0), glm::vec2(1, 1) });
-	//left									 
-	vertices.push_back({ glm::vec3(-0.5, -0.5, -0.5), glm::vec3(-1, 0, 0), glm::vec2(0, 0) });
-	vertices.push_back({ glm::vec3(-0.5, -0.5, +0.5), glm::vec3(-1, 0, 0), glm::vec2(1, 0) });
-	vertices.push_back({ glm::vec3(-0.5, +0.5, -0.5), glm::vec3(-1, 0, 0), glm::vec2(0, 1) });
-	vertices.push_back({ glm::vec3(-0.5, +0.5, +0.5), glm::vec3(-1, 0, 0), glm::vec2(1, 1) });
-	//top									 
-	vertices.push_back({ glm::vec3(-0.5, +0.5, +0.5), glm::vec3(0, 1, 0), glm::vec2(0, 0) });
-	vertices.push_back({ glm::vec3(+0.5, +0.5, +0.5), glm::vec3(0, 1, 0), glm::vec2(1, 0) });
-	vertices.push_back({ glm::vec3(-0.5, +0.5, -0.5), glm::vec3(0, 1, 0), glm::vec2(0, 1) });
-	vertices.push_back({ glm::vec3(+0.5, +0.5, -0.5), glm::vec3(0, 1, 0), glm::vec2(1, 1) });
-	//bottom								 
-	vertices.push_back({ glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, -1, 0), glm::vec2(0, 0) });
-	vertices.push_back({ glm::vec3(+0.5, -0.5, -0.5), glm::vec3(0, -1, 0), glm::vec2(1, 0) });
-	vertices.push_back({ glm::vec3(-0.5, -0.5, +0.5), glm::vec3(0, -1, 0), glm::vec2(0, 1) });
-	vertices.push_back({ glm::vec3(+0.5, -0.5, +0.5), glm::vec3(0, -1, 0), glm::vec2(1, 1) });
+	MyMesh::meshes["ship"] = new ObjMesh("assets/ship.obj");
+	MyMesh::meshes["sphere"] = new SphereMesh();
+	MyMesh::meshes["plane"] = new PlaneMesh();
+	MyMesh::meshes["hill"] = new HillMesh(5);
+	MyMesh::meshes["cannonbottom"] = new CannonBottomMesh(8);
+	MyMesh::meshes["cannontop"] = new CannonTopMesh();
 
-	std::vector<int> indices(36);
-	int index = 0;
-	for (int i = 0; i < 6 * 4; i += 4)
+	for (std::map<const char*, MyMesh*>::iterator it = MyMesh::meshes.begin(); it !=MyMesh::meshes.end(); ++it)
 	{
-		indices[index + 0] = i + 0;
-		indices[index + 1] = i + 1;
-		indices[index + 2] = i + 2;
-		indices[index + 3] = i + 1;
-		indices[index + 4] = i + 3;
-		indices[index + 5] = i + 2;
-		index += 6;
+		it->second->init();
 	}
-
-	//
-	// geometria definiálása (std::vector<...>) és GPU pufferekbe való feltöltése BufferData-val
-	//
-
-	// vertexek pozíciói:
-	/*
-	Az m_CubeVertexBuffer konstruktora már létrehozott egy GPU puffer azonosítót és a most következõ BufferData hívás ezt
-	1. bind-olni fogja GL_ARRAY_BUFFER target-re (hiszen m_CubeVertexBuffer típusa ArrayBuffer) és
-	2. glBufferData segítségével áttölti a GPU-ra az argumentumban adott tároló értékeit
-
-	*/
-
-	m_CubeVertexBuffer.BufferData(vertices);
-
-	// és a primitíveket alkotó csúcspontok indexei (az elõzõ tömbökbõl) - triangle list-el való kirajzolásra felkészülve
-	m_CubeIndices.BufferData(indices);
-
-	// geometria VAO-ban való regisztrálása
-	m_CubeVao.Init(
-		{
-			// 0-ás attribútum "lényegében" glm::vec3-ak sorozata és az adatok az m_CubeVertexBuffer GPU pufferben vannak
-			{ CreateAttribute<		0,						// attribútum: 0
-									glm::vec3,				// CPU oldali adattípus amit a 0-ás attribútum meghatározására használtunk <- az eljárás a glm::vec3-ból kikövetkezteti, hogy 3 darab float-ból áll a 0-ás attribútum
-									0,						// offset: az attribútum tároló elejétõl vett offset-je, byte-ban
-									sizeof(Vertex)			// stride: a következõ csúcspont ezen attribútuma hány byte-ra van az aktuálistól
-								>, m_CubeVertexBuffer },
-			{ CreateAttribute<1, glm::vec3, (sizeof(glm::vec3)), sizeof(Vertex)>, m_CubeVertexBuffer },
-			{ CreateAttribute<2, glm::vec2, (2 * sizeof(glm::vec3)), sizeof(Vertex)>, m_CubeVertexBuffer },
-		},
-		m_CubeIndices
-	);
 }
 
 void CMyApp::InitSkyBox()
@@ -175,21 +120,10 @@ void CMyApp::InitSkyBox()
 
 void CMyApp::InitShaders()
 {
-	// a shadereket tároló program létrehozása az OpenGL-hez hasonló módon:
-	m_program.AttachShaders({
-		{ GL_VERTEX_SHADER, "myVert.vert"},
-		{ GL_FRAGMENT_SHADER, "myFrag.frag"}
-	});
 
-	// attributomok osszerendelese a VAO es shader kozt
-	m_program.BindAttribLocations({
-		{ 0, "vs_in_pos" },				// VAO 0-as csatorna menjen a vs_in_pos-ba
-		{ 1, "vs_in_norm" },			// VAO 1-es csatorna menjen a vs_in_norm-ba
-		{ 2, "vs_in_tex" },				// VAO 2-es csatorna menjen a vs_in_tex-be
-	});
-
-	m_program.LinkProgram();
-
+	AddShader("default", "myVert.vert", "myFrag.frag");
+	AddShader("water", "waterVert.vert", "waterFrag.frag");
+	//m_program = CMyApp::programs["default"];
 	// shader program rövid létrehozása, egyetlen függvényhívással a fenti három:
 	m_programSkybox.Init(
 		{
@@ -202,87 +136,134 @@ void CMyApp::InitShaders()
 	);
 }
 
+void CMyApp::AddShader(const char* title, const char* vert, const char* frag)
+{
+	ProgramObject* program = new ProgramObject();
+	program->Init(
+		{
+			{ GL_VERTEX_SHADER, vert },
+			{ GL_FRAGMENT_SHADER, frag }
+		},
+		{
+			{ 0, "vs_in_pos" },				// VAO 0-as csatorna menjen a vs_in_pos-ba
+			{ 1, "vs_in_norm" },			// VAO 1-as csatorna menjen a vs_in_norm-ba
+			{ 2, "vs_in_tex" }				// VAO 2-as csatorna menjen a vs_in_tex-ba
+		}
+	);
+	GameManager::programs[title] = program;
+}
+
+void CMyApp::AddTexture(const char* title, const char* fileName)
+{
+	Texture2D* texture = new Texture2D();
+	texture->FromFile(fileName);
+	GameManager::textures[title] = texture;
+}
+
+void CMyApp::AddGameObject(GameObject* obj)
+{
+	toAdd.push_back(obj);
+}
+
 bool CMyApp::Init()
 {
-	Input::init();
 	// törlési szín legyen kékes
 	glClearColor(0.125f, 0.25f, 0.5f, 1.0f);
 
 	glEnable(GL_CULL_FACE); // kapcsoljuk be a hatrafele nezo lapok eldobasat
 	glEnable(GL_DEPTH_TEST); // mélységi teszt bekapcsolása (takarás)
 
+	InitMeshes();
 	InitShaders();
-	InitCube();
 	InitSkyBox();
 
 	// egyéb textúrák betöltése
-	m_woodTexture.FromFile("assets/wood.jpg");
-	m_suzanneTexture.FromFile("assets/marron.jpg");
+	AddTexture("wood", "assets/wood.jpg");
+	AddTexture("water", "assets/water2.jpg");
+	AddTexture("marron", "assets/marron.jpg");
+	AddTexture("ship_texture", "assets/ship_texture.jpg");
+	AddTexture("ship_empty", "assets/ship_empty.jpg");
 
-	// mesh betoltese
-	m_mesh = ObjParser::parse("assets/Suzanne.obj");
-	m_mesh->initBuffers();
-	
 	// kamera
-	m_camera.SetProj(45.0f, 640.0f / 480.0f, 0.01f, 1000.0f);
+	camera.SetProj(45.0f, 640.0f / 480.0f, 0.01f, 1000.0f);
+	GameManager::viewProj = camera.GetViewProj();
+	//GameManager::m_matProj = glm::perspective(45.0f, 640 / 480.0f, 1.0f, 1000.0f);
+	
+
+	InitGameObjects();
+	camera.SetFollowObject(player);
+
 
 	return true;
+}
+
+void CMyApp::InitGameObjects()
+{
+	int waterCount = GameManager::mapSize;
+	for (int i = -waterCount; i < waterCount; i++)
+	for(int j = -waterCount; j < waterCount; j++)
+		gameObjects.push_back(new Water(i,j));
+
+	gameObjects.push_back(new EnemyShip({10, 0, 30}));
+	player = new PlayerShip();
+	gameObjects.push_back(player);
 }
 
 void CMyApp::Clean()
 {
 	glDeleteTextures(1, &m_skyboxTexture);
 
-	delete m_mesh;
+	//delete m_mesh;
 }
 
 void CMyApp::Update()
 {
-	Input::Update();
 	static Uint32 last_time = SDL_GetTicks();
 	float delta_time = (SDL_GetTicks() - last_time) / 1000.0f;
+	GameObject::deltaTime = delta_time;
+	//std::cout << delta_time << std::endl;
+	camera.Update(delta_time);
 
-	m_camera.Update(delta_time);
-	
+	if (!isPaused)
+	for each (GameObject* gameObject in gameObjects)
+	{
+		gameObject->Update();
+	}
+	ClearGameObjects();
+	AddGameObjects();
+
 	last_time = SDL_GetTicks();
+	Input::Update();
+}
+void CMyApp::AddGameObjects()
+{
+	for (unsigned int i = 0; i < toAdd.size(); i++) {
+		gameObjects.push_back(toAdd[i]);
+	}
+	toAdd.clear();
 }
 
-void CMyApp::Render()
+void CMyApp::ClearGameObjects()
 {
-	// töröljük a frampuffert (GL_COLOR_BUFFER_BIT) és a mélységi Z puffert (GL_DEPTH_BUFFER_BIT)
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	for (unsigned int i = 0; i < toDestroy.size(); i++) {
+		for (unsigned int j = 0; j < gameObjects.size(); j++) {
+			if (gameObjects[j] == toDestroy[i]) {
+				GameObject* obj = gameObjects[j];
+				gameObjects[j] = gameObjects[gameObjects.size() - 1];
+				gameObjects.pop_back();
+				if (obj == camera.GetFollowObject())
+					camera.SetFollowObject(nullptr);
 
-	glm::mat4 viewProj = m_camera.GetViewProj();
-
-	//Suzanne
-	glm::mat4 suzanneWorld = glm::mat4(1.0f);
-	m_program.Use();
-	m_program.SetTexture("texImage", 0, m_suzanneTexture);
-	m_program.SetUniform("MVP", viewProj * suzanneWorld);
-	m_program.SetUniform("world", suzanneWorld);
-	m_program.SetUniform("worldIT", glm::inverse(glm::transpose(suzanneWorld)));
-	m_mesh->draw();
-
-	// kockák
-	//m_program.Use(); nem hívjuk meg újra, hisz ugyanazt a shadert használják
-	m_CubeVao.Bind();
-	m_program.SetTexture("texImage", 0, m_woodTexture);
-	glm::mat4 cubeWorld;
-
-	float time = SDL_GetTicks() / 1000.0f * 2 * float(M_PI) / 10;
-	for (int i = 0; i < 10; ++i)
-	{
-		cubeWorld =
-			glm::rotate(time + 2 * glm::pi<float>() / 10 * i, glm::vec3(0, 1, 0))*
-			glm::translate(glm::vec3(10 + 5 * sin(time), 0, 0))*
-			glm::rotate((i + 1)*time, glm::vec3(0, 1, 0));
-		m_program.SetUniform("MVP", viewProj * cubeWorld);
-		m_program.SetUniform("world", cubeWorld);
-		m_program.SetUniform("worldIT", glm::inverse(glm::transpose(cubeWorld)));
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
+				obj->~GameObject();
+				//delete obj;
+			}
+		}
 	}
-	m_program.Unuse();
+	toDestroy.clear();
+}
 
+void CMyApp::RenderSkyBox()
+{
 	// skybox
 	// mentsük el az elõzõ Z-test eredményt, azaz azt a relációt, ami alapján update-eljük a pixelt.
 	GLint prevDepthFnc;
@@ -293,8 +274,8 @@ void CMyApp::Render()
 
 	m_SkyboxVao.Bind();
 	m_programSkybox.Use();
-	m_programSkybox.SetUniform("MVP", viewProj * glm::translate( m_camera.GetEye()) );
-	
+	m_programSkybox.SetUniform("MVP", camera.GetViewProj() * glm::translate(camera.GetEye()));
+
 	// cube map textúra beállítása 0-ás mintavételezõre és annak a shaderre beállítása
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyboxTexture);
@@ -306,30 +287,46 @@ void CMyApp::Render()
 
 	// végül állítsuk vissza
 	glDepthFunc(prevDepthFnc);
+}
 
+void CMyApp::Render()
+{
+	// töröljük a frampuffert (GL_COLOR_BUFFER_BIT) és a mélységi Z puffert (GL_DEPTH_BUFFER_BIT)
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// 1. feladat: készíts egy vertex shader-fragment shader párt, ami tárolt geometria _nélkül_ kirajzol egy tetszõleges pozícióba egy XYZ tengely-hármast,
-	//			   ahol az X piros, az Y zöld a Z pedig kék!
+	GameManager::viewProj = camera.GetViewProj();
+
+	for each (GameObject* gameObject in gameObjects)
+	{
+		gameObject->Render();
+	}
+
+	RenderSkyBox();
 
 	//ImGui Testwindow
-	ImGui::ShowTestWindow();
+	//ImGui::ShowTestWindow();
 }
 
 void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
 {
-	m_camera.KeyboardDown(key);
+	if (key.keysym.sym == SDLK_SPACE)
+		camera.SetFollowObject((camera.GetFollowObject() == nullptr) ? player : nullptr);
+	if (key.keysym.sym == SDLK_0)
+		isPaused = !isPaused;
+	camera.KeyboardDown(key);
 	Input::KeyboardDown(key);
 }
 
 void CMyApp::KeyboardUp(SDL_KeyboardEvent& key)
 {
-	m_camera.KeyboardUp(key);
+	camera.KeyboardUp(key);
 	Input::KeyboardUp(key);
 }
 
 void CMyApp::MouseMove(SDL_MouseMotionEvent& mouse)
 {
-	m_camera.MouseMove(mouse);
+	camera.MouseMove(mouse);
+	//player->MouseMove(mouse);
 }
 
 void CMyApp::MouseDown(SDL_MouseButtonEvent& mouse)
@@ -342,12 +339,26 @@ void CMyApp::MouseUp(SDL_MouseButtonEvent& mouse)
 
 void CMyApp::MouseWheel(SDL_MouseWheelEvent& wheel)
 {
+	camera.MouseWheel(wheel);
+	//player->MouseWheel(wheel);
 }
 
 // a két paraméterbe az új ablakméret szélessége (_w) és magassága (_h) található
 void CMyApp::Resize(int _w, int _h)
 {
-	glViewport(0, 0, _w, _h );
 
-	m_camera.Resize(_w, _h);
+	glViewport(0, 0, _w, _h);
+	camera.Resize(_w, _h);
+
+	/*
+	GameManager::m_matProj = glm::perspective(45.0f,		// 90 fokos nyilasszog
+		_w / (float)_h,	// ablakmereteknek megfelelo nezeti arany
+		0.01f,			// kozeli vagosik
+		100.0f);		// tavoli vagosik
+		*/
+}
+
+void CMyApp::DestroyGameObject(GameObject* obj)
+{
+	toDestroy.push_back(obj);
 }

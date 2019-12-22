@@ -13,6 +13,11 @@ gCamera::gCamera(void) : m_eye(0.0f, 20.0f, 20.0f), m_at(0.0f), m_up(0.0f, 1.0f,
 	m_dist = glm::length( m_at - m_eye );	
 
 	SetProj(45.0f, 640/480.0f, 0.001f, 1000.0f);
+	distance = 10.0;
+	targetDistance = distance;
+	followObject = nullptr;
+	cameraSpeed = 1;
+	cameraPos = { M_PI / 2, 1 };
 }
 
 gCamera::gCamera(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _up) : m_speed(16.0f), m_goFw(0), m_goRight(0), m_dist(10), m_slow(false)
@@ -22,6 +27,16 @@ gCamera::gCamera(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _up) : m_speed(16.0f),
 
 gCamera::~gCamera(void)
 {
+}
+
+void gCamera::SetAt(glm::vec3 _at)
+{
+	SetView(m_eye, _at, m_up);
+}
+
+void gCamera::SetPosition(glm::vec3 _pos)
+{
+	SetView(_pos, m_at, m_up);
 }
 
 void gCamera::SetView(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _up)
@@ -52,8 +67,24 @@ glm::mat4 gCamera::GetViewMatrix()
 
 void gCamera::Update(float _deltaTime)
 {
-	m_eye += (m_goFw*m_fw + m_goRight*m_st)*m_speed*_deltaTime;
-	m_at  += (m_goFw*m_fw + m_goRight*m_st)*m_speed*_deltaTime;
+
+	if (followObject != nullptr) {
+		glm::vec3 position = followObject->position;
+
+		if (SDL_fabs(targetDistance - distance) > 0.1)
+			distance += (targetDistance - distance) * cameraSpeed * _deltaTime;
+
+		float xPos = distance * SDL_cos(cameraPos.x) * SDL_sin(cameraPos.y);
+		float zPos = distance * SDL_sin(cameraPos.x) * SDL_sin(cameraPos.y);
+		float yPos = distance * SDL_cos(cameraPos.y);
+
+		m_eye = position + glm::vec3(xPos, yPos, zPos);
+		m_at = position + glm::vec3(0, 2, 0);
+	}
+	else {
+		m_eye += (m_goFw * m_fw + m_goRight * m_st) * m_speed * _deltaTime;
+		m_at += (m_goFw * m_fw + m_goRight * m_st) * m_speed * _deltaTime;
+	}
 
 	m_viewMatrix = glm::lookAt( m_eye, m_at, m_up);
 	m_matViewProj = m_matProj * m_viewMatrix;
@@ -86,6 +117,8 @@ void gCamera::Resize(int _w, int _h)
 
 void gCamera::KeyboardDown(SDL_KeyboardEvent& key)
 {
+	if (followObject != nullptr)
+		return;
 	switch ( key.keysym.sym )
 	{
 	case SDLK_LSHIFT:
@@ -96,16 +129,16 @@ void gCamera::KeyboardDown(SDL_KeyboardEvent& key)
 			m_speed /= 4.0f;
 		}
 		break;
-	case SDLK_w:
+	case SDLK_UP:
 			m_goFw = 1;
 		break;
-	case SDLK_s:
+	case SDLK_DOWN:
 			m_goFw = -1;
 		break;
-	case SDLK_a:
+	case SDLK_LEFT:
 			m_goRight = -1;
 		break;
-	case SDLK_d:
+	case SDLK_RIGHT:
 			m_goRight = 1;
 		break;
 	}
@@ -124,12 +157,12 @@ void gCamera::KeyboardUp(SDL_KeyboardEvent& key)
 			m_speed *= 4.0f;
 		}
 		break;
-	case SDLK_w:
-	case SDLK_s:
+	case SDLK_UP:
+	case SDLK_DOWN:
 			m_goFw = 0;
 		break;
-	case SDLK_a:
-	case SDLK_d:
+	case SDLK_LEFT:
+	case SDLK_RIGHT:
 			m_goRight = 0;
 		break;
 	}
@@ -137,10 +170,28 @@ void gCamera::KeyboardUp(SDL_KeyboardEvent& key)
 
 void gCamera::MouseMove(SDL_MouseMotionEvent& mouse)
 {
-	if ( mouse.state & SDL_BUTTON_LMASK )
-	{
-		UpdateUV(mouse.xrel/100.0f, mouse.yrel/100.0f);
-	}
+	float xrel = mouse.xrel / 100.0f;
+	float yrel = mouse.yrel / 100.0f;
+
+	UpdateUV(xrel, yrel);
+
+	cameraPos.x += xrel;
+	cameraPos.y -= yrel;
+
+	if (cameraPos.y <= 0.1)
+		cameraPos.y = 0.1;
+	if (cameraPos.y >= 1.25)
+		cameraPos.y = 1.25;
+}
+
+void gCamera::MouseWheel(SDL_MouseWheelEvent& wheel)
+{
+	targetDistance -= wheel.y;
+	if (targetDistance <= 5)
+		targetDistance = 5;
+	if (targetDistance >= 20)
+		targetDistance = 20;
+
 }
 
 void gCamera::LookAt(glm::vec3 _at)
@@ -148,3 +199,12 @@ void gCamera::LookAt(glm::vec3 _at)
 	SetView(m_eye, _at, m_up);
 }
 
+void gCamera::SetFollowObject(GameObject* follow)
+{
+	followObject = follow;
+}
+
+GameObject* gCamera::GetFollowObject()
+{
+	return followObject;
+}

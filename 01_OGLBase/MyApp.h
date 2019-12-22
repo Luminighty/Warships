@@ -26,8 +26,11 @@
 #include "includes/ObjParser_OGL3.h"
 
 #include "GameObject.h"
+#include "PlayerShip.h"
 #include "Input.h"
 #include <vector>
+
+#include "GameManager.h"
 
 class CMyApp
 {
@@ -49,33 +52,48 @@ public:
 	void MouseWheel(SDL_MouseWheelEvent&);
 	void Resize(int, int);
 
+	static void DestroyGameObject(GameObject*);
+	static void AddGameObject(GameObject*);
+
+	gCamera camera;
+
+	static std::vector<GameObject*> gameObjects;
+
+
 protected:
 	// shaderekhez szükséges változók
-	ProgramObject		m_program;			// mesh shader
+	//ProgramObject*		m_program;			// mesh shader
 	ProgramObject		m_programSkybox;	// skybox shader
 
+	/*
 	VertexArrayObject	m_CubeVao;			// VAO
 	IndexBuffer			m_CubeIndices;		// index buffer
 	ArrayBuffer			m_CubeVertexBuffer;	// VBO
+	*/
 	VertexArrayObject	m_SkyboxVao;
 	IndexBuffer			m_SkyboxIndices;	
 	ArrayBuffer			m_SkyboxPos;		
 
-	gCamera				m_camera;
-
-	Texture2D			m_woodTexture;
-	Texture2D			m_suzanneTexture;
 
 	// nyers OGL azonosítók
 	GLuint				m_skyboxTexture;
 
-	std::vector<GameObject*> gameObjects;
-	// mesh adatok
-	Mesh *m_mesh;
+	static std::vector<GameObject*> toDestroy;
+	static std::vector<GameObject*> toAdd;
+	PlayerShip* player;
 
+	
 	// a jobb olvashatóság kedvéért
 	void InitShaders();
-	void InitCube();
 	void InitSkyBox();
+	void InitMeshes();
+	void InitGameObjects();
+	void RenderSkyBox();
+	void AddShader(const char*, const char*, const char*);
+	void AddTexture(const char*, const char*);
+	void ClearGameObjects();
+	void AddGameObjects();
+
+	bool isPaused = false;
 };
 

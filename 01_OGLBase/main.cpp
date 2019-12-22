@@ -142,7 +142,7 @@ int main( int argc, char* args[] )
 			std::cout << "[app.Init] Az alkalmazás inicializálása közben hibatörtént!" << std::endl;
 			return 1;
 		}
-
+		//SDL_SetRelativeMouseMode(SDL_TRUE);
 		while (!quit)
 		{
 			// amíg van feldolgozandó üzenet dolgozzuk fel mindet:

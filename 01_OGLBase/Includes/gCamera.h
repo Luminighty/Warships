@@ -3,6 +3,8 @@
 #include <SDL.h>
 #include <glm/glm.hpp>
 
+#include "../GameObject.h"
+
 class gCamera
 {
 public:
@@ -18,9 +20,14 @@ public:
 
 	void Update(float _deltaTime);
 
+	void SetAt(glm::vec3 eye_);
+	void SetPosition(glm::vec3 _pos);
 	void SetView(glm::vec3 _eye, glm::vec3 _at, glm::vec3 _up);
 	void SetProj(float _angle, float _aspect, float _zn, float _zf); 
 	void LookAt(glm::vec3 _at);
+
+	void SetFollowObject(GameObject*);
+	GameObject* GetFollowObject();
 
 	void SetSpeed(float _val);
 	glm::vec3 GetEye()
@@ -53,8 +60,15 @@ public:
 	void KeyboardDown(SDL_KeyboardEvent& key);
 	void KeyboardUp(SDL_KeyboardEvent& key);
 	void MouseMove(SDL_MouseMotionEvent& mouse);
+	void MouseWheel(SDL_MouseWheelEvent& event);
 
 private:
+	double distance;
+	GameObject* followObject;
+	double targetDistance;
+	double cameraSpeed;
+	glm::vec2 cameraPos;
+
 	/// <summary>
 	/// Updates the UV.
 	/// </summary>
