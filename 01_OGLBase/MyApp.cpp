@@ -32,12 +32,21 @@ CMyApp::~CMyApp(void)
 	std::cout << "dtor!\n";
 }
 
+void CMyApp::InitTextures()
+{
+	AddTexture("wood", "assets/wood.jpg");
+	AddTexture("water", "assets/water2.jpg");
+	AddTexture("marron", "assets/marron.jpg");
+	AddTexture("ship_texture", "assets/ship_texture.jpg");
+	AddTexture("ship_empty", "assets/ship_empty.jpg");
+}
+
 void CMyApp::InitMeshes()
 {
 	MyMesh::meshes["ship"] = new ObjMesh("assets/ship.obj");
 	MyMesh::meshes["sphere"] = new SphereMesh();
 	MyMesh::meshes["plane"] = new PlaneMesh();
-	MyMesh::meshes["hill"] = new HillMesh(5);
+	MyMesh::meshes["hill"] = new HillMesh(2);
 	MyMesh::meshes["cannonbottom"] = new CannonBottomMesh(8);
 	MyMesh::meshes["cannontop"] = new CannonTopMesh();
 
@@ -123,6 +132,7 @@ void CMyApp::InitShaders()
 
 	AddShader("default", "myVert.vert", "myFrag.frag");
 	AddShader("water", "waterVert.vert", "waterFrag.frag");
+	AddShader("hill", "myVert.vert", "hillFrag.frag");
 	//m_program = CMyApp::programs["default"];
 	// shader program rövid létrehozása, egyetlen függvényhívással a fenti három:
 	m_programSkybox.Init(
@@ -176,13 +186,7 @@ bool CMyApp::Init()
 	InitMeshes();
 	InitShaders();
 	InitSkyBox();
-
-	// egyéb textúrák betöltése
-	AddTexture("wood", "assets/wood.jpg");
-	AddTexture("water", "assets/water2.jpg");
-	AddTexture("marron", "assets/marron.jpg");
-	AddTexture("ship_texture", "assets/ship_texture.jpg");
-	AddTexture("ship_empty", "assets/ship_empty.jpg");
+	InitTextures();
 
 	// kamera
 	camera.SetProj(45.0f, 640.0f / 480.0f, 0.01f, 1000.0f);
@@ -204,9 +208,27 @@ void CMyApp::InitGameObjects()
 	for(int j = -waterCount; j < waterCount; j++)
 		gameObjects.push_back(new Water(i,j));
 
+	float deg90 = M_PI / 2.0f;
+
+	addHill({ -1, -1}, 0);
+	addHill( { 1, 1 }, 2 * deg90);
+	addHill({ -1, 1 }, 1 * deg90);
+	addHill({ 1, -1 }, 3 *deg90);
+
 	gameObjects.push_back(new EnemyShip({10, 0, 30}));
 	player = new PlayerShip();
 	gameObjects.push_back(player);
+}
+
+void CMyApp::addHill(glm::vec2 pos, float rot)
+{
+	GameObject* hill = new GameObject("hill", "hill", "ship_empty");
+	float mapSize = GameManager::fullMapSize();
+	hill->position = glm::vec3(pos.x * mapSize - 1, -1, pos.y * mapSize);
+	hill->size = glm::vec3(mapSize * 1.05f, 10, 1);
+	hill->rotation.y = rot;
+	gameObjects.push_back(hill);
+
 }
 
 void CMyApp::Clean()

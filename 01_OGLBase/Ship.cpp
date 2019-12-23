@@ -3,6 +3,7 @@
 
 #include <sstream>
 
+float Ship::shootDelay = 2.0f;
 float Ship::maxRotationSpeed = 1.0f;
 float Ship::minStep = 0.01f;
 float Ship::maxSpeed = 5.0f;
@@ -116,6 +117,7 @@ void Ship::Update()
 {
 	if (isDead())
 		return;
+	currentShootDelay -= deltaTime;
 	ComputeAction();
 	Move();
 	CheckCollision();
@@ -129,6 +131,10 @@ void Ship::Update()
 	}
 
 	//std::cout << SDL_fabs(speed) << std::endl;
+	if (angle > M_PI * 2)
+		angle -= M_PI * 2;
+	if (angle < 0)
+		angle += M_PI * 2;
 	rotation.y = angle;
 
 	AfterUpdate();
@@ -180,6 +186,8 @@ void Ship::Aim(float x, float y)
 
 void Ship::Shoot()
 {
+	if (!canShoot())
+		return;
 	float cosX = SDL_cos(aim_x);
 	float sinX = SDL_sin(aim_x);
 	float cosY = SDL_cos(aim_y);
@@ -189,7 +197,13 @@ void Ship::Shoot()
 	Missile* missile = new Missile(world, missileOffset, { -sinX * sinY,  cosY, cosX * sinY });
 	
 	missile->owner = getId();
+	currentShootDelay = shootDelay;
 	initObject(missile);
+}
+
+bool Ship::canShoot()
+{
+	return currentShootDelay < 0;
 }
 
 void Ship::AfterUpdate() {}

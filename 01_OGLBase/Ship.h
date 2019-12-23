@@ -17,6 +17,7 @@ protected:
 	void Accelerate(float);
 	void Aim(float, float);
 	void Shoot();
+	bool canShoot();
 private:
 	void InitCollisions();
 	void Move();
@@ -32,7 +33,9 @@ private:
 	float angle;
 	float aim_x;
 	float aim_y;
+	float currentShootDelay = 0;
 
+	static float shootDelay;
 	static float maxRotationSpeed;
 	static float maxSpeed;
 	static float minAimY;

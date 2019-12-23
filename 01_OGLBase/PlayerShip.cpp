@@ -4,7 +4,7 @@
 
 #include "MyApp.h"
 
-PlayerShip::PlayerShip() : Ship(5)
+PlayerShip::PlayerShip() : Ship(10)
 {
 	addTag("player");
 

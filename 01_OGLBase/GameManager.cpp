@@ -12,3 +12,8 @@ std::map<const char*, Texture2D*> GameManager::textures = {};
 
 float GameManager::tileSize = 50.0f;
 int   GameManager::mapSize  = 3;
+
+float GameManager::fullMapSize()
+{
+	return mapSize * tileSize;
+}

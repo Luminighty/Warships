@@ -88,7 +88,9 @@ protected:
 	void InitSkyBox();
 	void InitMeshes();
 	void InitGameObjects();
+	void InitTextures();
 	void RenderSkyBox();
+	void addHill(glm::vec2 pos, float rot);
 	void AddShader(const char*, const char*, const char*);
 	void AddTexture(const char*, const char*);
 	void ClearGameObjects();

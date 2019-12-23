@@ -130,7 +130,7 @@
       <Filter>Header Files\GameObjects</Filter>
     </ClInclude>
     <ClInclude Include="EnemyShip.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\GameObjects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -202,7 +202,7 @@
       <Filter>Source Files\GameObjects</Filter>
     </ClCompile>
     <ClCompile Include="EnemyShip.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\GameObjects</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -234,6 +234,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="waterFrag.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="hillFrag.frag">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

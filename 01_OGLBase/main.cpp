@@ -13,6 +13,9 @@
 #include <iostream>
 #include <sstream>
 
+#include <random>
+#include <time.h>
+
 #include "MyApp.h"
 
 void exitProgram()
@@ -25,6 +28,7 @@ void exitProgram()
 
 int main( int argc, char* args[] )
 {
+	srand(time(NULL));
 	// állítsuk be, hogy kilépés elõtt hívja meg a rendszer az exitProgram() függvényt - Kérdés: mi lenne enélkül?
 	atexit( exitProgram );
 

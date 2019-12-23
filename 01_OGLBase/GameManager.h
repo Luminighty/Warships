@@ -46,6 +46,7 @@ public:
 	static std::map<const char*, Texture2D*> textures;
 	static float tileSize;
 	static int mapSize;
+	static float fullMapSize();
 
 private:
 	GameManager();

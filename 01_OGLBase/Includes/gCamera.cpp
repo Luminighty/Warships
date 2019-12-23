@@ -16,7 +16,7 @@ gCamera::gCamera(void) : m_eye(0.0f, 20.0f, 20.0f), m_at(0.0f), m_up(0.0f, 1.0f,
 	distance = 10.0;
 	targetDistance = distance;
 	followObject = nullptr;
-	cameraSpeed = 1;
+	cameraSpeed = 1.8f;
 	cameraPos = { M_PI / 2, 1 };
 }
 

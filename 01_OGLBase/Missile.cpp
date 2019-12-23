@@ -10,7 +10,7 @@ Missile::Missile(glm::mat4 world, glm::vec3 pos, glm::vec3 to) : GameObject("can
 
 	this->rotation = glm::vec3(0, 0, 0);
 	this->damage = rand() % 4 + 2;
-	std::cout << "Missile created with " << damage << " damage" << std::endl;
+	//std::cout << "Missile created with " << damage << " damage" << std::endl;
 	setRotation();
 	InitCollisions();
 }
